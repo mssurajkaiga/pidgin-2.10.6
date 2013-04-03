@@ -1719,22 +1719,31 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 	GtkTreeIter iter, parent;
 	GtkTreeSelection *sel;
 	GtkTreePath *path;
+	GList *selected_list = NULL, *selected_nodes = NULL, *temp_list = NULL;
+	GtkTreeModel *model;
+	gboolean retval = TRUE; /* return value */
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
-	if(!gtk_tree_selection_get_selected(sel, NULL, &iter))
+	if(gtk_tree_selection_count_selected_rows(sel) == 0)
 		return FALSE;
 
-	gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
+	model = GTK_TREE_MODEL(gtkblist->treemodel);
+	selected_list = gtk_tree_selection_get_selected_rows(sel, &model);
+	selected_nodes = pidgin_blist_get_selected_nodes(selected_list, model);
+	if(!selected_list || !selected_nodes) return FALSE;
 
 	if(event->state & GDK_CONTROL_MASK &&
 			(event->keyval == 'o' || event->keyval == 'O')) {
 		PurpleBuddy *buddy;
-
-		if(PURPLE_BLIST_NODE_IS_CONTACT(node)) {
+		if(gtk_tree_selection_count_selected_rows(sel)==1){
+			node = (PurpleBlistNode *)selected_nodes->data;
+			if(PURPLE_BLIST_NODE_IS_CONTACT(node)) {
 			buddy = purple_contact_get_priority_buddy((PurpleContact*)node);
-		} else if(PURPLE_BLIST_NODE_IS_BUDDY(node)) {
-			buddy = (PurpleBuddy*)node;
-		} else {
+			} else if(PURPLE_BLIST_NODE_IS_BUDDY(node)) {
+				buddy = (PurpleBuddy*)node;
+			}
+		} 
+		else {
 			return FALSE;
 		}
 		if(buddy)
@@ -1742,57 +1751,78 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 	} else {
 		switch (event->keyval) {
 			case GDK_F2:
-				gtk_blist_menu_alias_cb(tv, node);
+				if(gtk_tree_selection_count_selected_rows(sel)==1){
+					node = (PurpleBlistNode *)selected_nodes->data;
+					gtk_blist_menu_alias_cb(tv, node);
+				}
 				break;
 
 			case GDK_Left:
-				path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &iter);
-				if (gtk_tree_view_row_expanded(GTK_TREE_VIEW(tv), path)) {
-					/* Collapse the Group */
-					gtk_tree_view_collapse_row(GTK_TREE_VIEW(tv), path);
-					gtk_tree_path_free(path);
-					return TRUE;
-				} else {
-					/* Select the Parent */
-					if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path)) {
-						if (gtk_tree_model_iter_parent(GTK_TREE_MODEL(gtkblist->treemodel), &parent, &iter)) {
-							gtk_tree_path_free(path);
-							path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &parent);
-							gtk_tree_view_set_cursor(GTK_TREE_VIEW(tv), path, NULL, FALSE);
-							gtk_tree_path_free(path);
-							return TRUE;
+				temp_list = selected_list;
+				do{
+					path = (GtkTreePath *) temp_list->data;
+					if (gtk_tree_view_row_expanded(GTK_TREE_VIEW(tv), path)) {
+						/* Collapse the Group */
+						gtk_tree_view_collapse_row(GTK_TREE_VIEW(tv), path);
+					} else {
+						/* Select the Parents and sets cursor to parent of first node*/
+						path = (GtkTreePath *)selected_list->data;
+						if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path)) {
+							if (gtk_tree_model_iter_parent(GTK_TREE_MODEL(gtkblist->treemodel), &parent, &iter)) {
+								gtk_tree_path_free(path);
+								path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &parent);
+								gtk_tree_view_set_cursor(GTK_TREE_VIEW(tv), path, NULL, FALSE);
+								gtk_tree_path_free(path);
+								return TRUE;
+							}
+							else {
+								retval = FALSE;
+							}
+						}
+						else {
+							retval = FALSE;
 						}
 					}
-				}
+				}while(temp_list = temp_list->next);
 				gtk_tree_path_free(path);
+				return retval;
 				break;
 
 			case GDK_Right:
-				path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &iter);
-				if (!gtk_tree_view_row_expanded(GTK_TREE_VIEW(tv), path)) {
-					/* Expand the Group */
-					if (PURPLE_BLIST_NODE_IS_CONTACT(node)) {
-						pidgin_blist_expand_contact_cb(NULL, node);
-						gtk_tree_path_free(path);
-						return TRUE;
-					} else if (!PURPLE_BLIST_NODE_IS_BUDDY(node)) {
-						gtk_tree_view_expand_row(GTK_TREE_VIEW(tv), path, FALSE);
-						gtk_tree_path_free(path);
-						return TRUE;
+				temp_list = selected_list;
+				do{
+					path = (GtkTreePath *) temp_list->data;
+					if(gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path)){
+						gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
 					}
-				} else {
-					/* Select the First Child */
-					if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &parent, path)) {
-						if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(gtkblist->treemodel), &iter, &parent, 0)) {
-							gtk_tree_path_free(path);
-							path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &iter);
-							gtk_tree_view_set_cursor(GTK_TREE_VIEW(tv), path, NULL, FALSE);
-							gtk_tree_path_free(path);
-							return TRUE;
+					else {
+						retval = FALSE;
+						continue;
+					}
+
+					if (!gtk_tree_view_row_expanded(GTK_TREE_VIEW(tv), path)) {
+						/* Expand the Group */
+						if (PURPLE_BLIST_NODE_IS_CONTACT(node)) {
+							pidgin_blist_expand_contact_cb(NULL, node);
+						} else if (!PURPLE_BLIST_NODE_IS_BUDDY(node)) {
+							gtk_tree_view_expand_row(GTK_TREE_VIEW(tv), path, FALSE);
+						}
+					} else {
+						/* Select the First Child of first expanded node*/
+						if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &parent, path)) {
+							if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(gtkblist->treemodel), &iter, &parent, 0)) {
+								gtk_tree_path_free(path);
+								path = gtk_tree_model_get_path(GTK_TREE_MODEL(gtkblist->treemodel), &iter);
+								gtk_tree_view_set_cursor(GTK_TREE_VIEW(tv), path, NULL, FALSE);
+								/* comment below two lines and set retval = TRUE if you want to select First Child of last expanded node */
+								gtk_tree_path_free(path);
+								return TRUE;
+							}
 						}
 					}
-				}
+				}while(temp_list = temp_list->next);
 				gtk_tree_path_free(path);
+				return retval;
 				break;
 		}
 	}
@@ -2363,10 +2393,9 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 				
 			handled = TRUE;
 
-		/* Double middle click gets info */
+		/* Double middle click gets info - No point in doing this for multiple selections, maybe add multiple user info later*/
 		}
-		
-		else handled = FALSE; /* to be removed now */
+
 	}
 
 #if (1)
@@ -2413,7 +2442,7 @@ pidgin_blist_popup_menu_cb(GtkWidget *tv, void *user_data)
 	GtkTreeIter iter;
 	GtkTreeSelection *sel;
 	gboolean handled = FALSE;
-	GList *selected_list = NULL;
+	GList *selected_list = NULL, *selected_nodes = NULL;
 	GtkTreePath* path;
 	GtkTreeModel* model = NULL;
 
@@ -2426,26 +2455,18 @@ pidgin_blist_popup_menu_cb(GtkWidget *tv, void *user_data)
 		if(gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path)){
 			gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
 			handled = pidgin_blist_show_context_menu(node, pidgin_treeview_popup_menu_position_func, tv, 0, GDK_CURRENT_TIME);
-			return handled;
 		}
 	}
 		
 	else if (gtk_tree_selection_count_selected_rows(sel)>1){
 		model = gtk_tree_view_get_model (GTK_TREE_VIEW(gtkblist->treeview));
 		selected_list = gtk_tree_selection_get_selected_rows(sel,&model);
-		return FALSE; /* to be removed now */
+		selected_nodes = pidgin_blist_get_selected_nodes(selected_list, model);
+
+		handled = pidgin_blist_show_multiple_selection_context_menu(selected_nodes, pidgin_treeview_popup_menu_position_func, tv, 3, GDK_CURRENT_TIME);
 	}
 
-	else {
-		return FALSE;
-	}
-
-	//gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
-
-	/* Shift+F10 draws a context menu */
-	//handled = pidgin_blist_show_context_menu(node, pidgin_treeview_popup_menu_position_func, tv, 0, GDK_CURRENT_TIME);
-
-	//return handled;
+	return handled;
 }
 
 static void pidgin_blist_buddy_details_cb(gpointer data, guint action, GtkWidget *item)
