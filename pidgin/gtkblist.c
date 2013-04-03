@@ -867,7 +867,6 @@ static void gtk_blist_multiple_menu_showoffline_cb(GtkWidget *w, GList *nodes_li
 
 	show_offline = !show_offline;
 	temp_list = nodes_list;
-	printf("Show Offline = %d.\n", (int)show_offline);
 
 	do{
 		node = (PurpleBlistNode*) temp_list->data;
@@ -909,7 +908,6 @@ static void gtk_blist_multiple_menu_showoffline_cb(GtkWidget *w, GList *nodes_li
 				}
 			}
 		}
-		printf("Set show_offline = %d.\n", (int)show_offline);
 	}while(temp_list = temp_list->next);
 }
 
@@ -2269,7 +2267,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path);
 	gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
 	gtknode = (struct _pidgin_blist_node *)node->ui_data;
-	printf("Button pressed.\n");
+
 	if(gtk_tree_selection_count_selected_rows(sel)==1){
 		/* Right click draws a context menu */
 		if ((event->button == 3) && (event->type == GDK_BUTTON_PRESS)) {
@@ -2292,9 +2290,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 				gtk_tree_selection_unselect_all(sel);
 				gtk_tree_selection_select_path(sel,path);
 			}
-			printf("Right click identified - 1.\n");
 			handled = pidgin_blist_show_context_menu(node, NULL, tv, 3, event->time);
-			printf("Right click menu shown - 1.\n");
 
 		/* CTRL+middle click expands or collapse a contact */
 		} else if ((event->button == 2) && (event->type == GDK_BUTTON_PRESS) &&
@@ -2347,9 +2343,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 				gtk_tree_selection_unselect_all(sel);
 				gtk_tree_selection_select_path(sel,path);
 			}
-			printf("Right click identified - 1.\n");
 			handled = pidgin_blist_show_multiple_selection_context_menu(selected_nodes, NULL, tv, 3, event->time);
-			printf("Right click menu shown - 1.\n");
 
 		/* CTRL+middle click expands or collapse a contact */
 		} else if ((event->button == 2) && (event->type == GDK_BUTTON_PRESS) &&
@@ -2390,7 +2384,6 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 			gtk_tree_selection_unselect_all(sel);
 			gtk_tree_selection_select_path(sel, path);
 			gtk_tree_path_free(path);
-			printf("Button press completed - 1.\n");
 			return TRUE;
 		}
 		else if(gtk_tree_selection_count_selected_rows(sel)>1){
@@ -2404,14 +2397,12 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 				gtk_tree_selection_select_path(sel, path);
 			}while(temp_list = temp_list->next);
 			gtk_tree_path_free(path);
-			printf("Button press completed - 2.\n");
 			return TRUE;
 		}
 	}
 #endif
 	//gtk_tree_selection_unselect_all(sel);
 	gtk_tree_path_free(path);
-	printf("Button press completed - 3.\n");
 	return FALSE;
 }
 
@@ -6699,7 +6690,6 @@ static gboolean do_multiple_selection_changed(GList *new_selected_nodes)
 	PurpleBlistNode *node;
 
 	/* test for gtkblist because crazy timeout means we can be called after the blist is gone */
-	printf("Compare Output = %d\n", (int)compare_lists(old_selected_nodes,new_selected_nodes));
 	if (gtkblist && !compare_lists(old_selected_nodes, new_selected_nodes)) {
 		old_selected_nodes = gtkblist->selected_nodes;
 		gtkblist->selected_nodes = new_selected_nodes;
@@ -6715,23 +6705,6 @@ static gboolean do_multiple_selection_changed(GList *new_selected_nodes)
 				pidgin_blist_update(NULL,node);
 			}while(old_selected_nodes = old_selected_nodes->next);
 		}
-	}
-
-	return FALSE;
-}
-
-static gboolean do_selection_changed(PurpleBlistNode *new_selection)
-{
-	PurpleBlistNode *old_selection = NULL;
-
-	/* test for gtkblist because crazy timeout means we can be called after the blist is gone */
-	if (gtkblist && new_selection != gtkblist->selected_node) {
-		old_selection = gtkblist->selected_node;
-		gtkblist->selected_node = new_selection;
-		if(new_selection)
-			pidgin_blist_update(NULL, new_selection);
-		if(old_selection)
-			pidgin_blist_update(NULL, old_selection);
 	}
 
 	return FALSE;
