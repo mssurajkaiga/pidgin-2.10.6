@@ -110,7 +110,6 @@ struct _PidginBuddyList {
 	GtkWidget *tipwindow;            /**< The window used by the tooltip */
 	GList *tooltipdata;              /**< The data for each "chunk" of the tooltip */
 
-	//PurpleBlistNode *selected_node;    /**< The currently selected node -- declaration to be removed */
 	GList *selected_nodes;			/**< List of selected nodes */
 	GdkCursor *hand_cursor;         /**< Hand cursor */
 	GdkCursor *arrow_cursor;        /**< Arrow cursor */

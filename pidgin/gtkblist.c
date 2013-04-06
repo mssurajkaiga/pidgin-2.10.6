@@ -310,7 +310,7 @@ static void gtk_blist_multiple_menu_im_cb(GtkWidget *w, GList *buddy_nodes)
 	PurpleBuddy *b;
 	do{
 		b = (PurpleBuddy *) buddy_nodes->data;
-	pidgin_dialogs_im_with_user(purple_buddy_get_account(b),
+		pidgin_dialogs_im_with_user(purple_buddy_get_account(b),
 	                            purple_buddy_get_name(b));
 	}while(buddy_nodes = buddy_nodes->next);
 }
@@ -1986,7 +1986,8 @@ pidgin_blist_make_buddy_menu(GtkWidget *menu, PurpleBuddy *buddy, gboolean sub) 
 }
 
 void
-pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gboolean sub) {
+pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gboolean sub)
+{
 	PurpleAccount *account = NULL;
 	PurpleConnection *pc = NULL;
 	PurplePluginProtocolInfo *prpl_info;
@@ -1997,20 +1998,6 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 	GList *temp_list = NULL;
 	g_return_if_fail(menu);
 	g_return_if_fail(buddy_nodes);
-
-	/*
-	account = purple_buddy_get_account(buddy);
-	pc = purple_account_get_connection(account);
-	prpl_info = PURPLE_PLUGIN_PROTOCOL_INFO(purple_connection_get_prpl(pc));
-
-	node = PURPLE_BLIST_NODE(buddy);
-
-	contact = purple_buddy_get_contact(buddy);
-	if (contact) {
-		PidginBlistNode *node = purple_blist_node_get_ui_data(PURPLE_BLIST_NODE(contact));
-		contact_expanded = node->contact_expanded;
-	}
-	*/
 
 	temp_list = buddy_nodes;
 	do{
@@ -2030,52 +2017,9 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 		}
 	}while(temp_list = temp_list->next);
 
-	/*if (prpl_info && prpl_info->get_info) {
-		pidgin_new_item_from_stock(menu, _("Get _Info"), PIDGIN_STOCK_TOOLBAR_USER_INFO,
-				G_CALLBACK(gtk_blist_menu_info_cb), buddy, 0, 0, NULL);
-	}*/
 	pidgin_new_item_from_stock(menu, _("I_M"), PIDGIN_STOCK_TOOLBAR_MESSAGE_NEW,
 			G_CALLBACK(gtk_blist_multiple_menu_im_cb), buddy_nodes, 0, 0, NULL);
 
-/*
-#ifdef USE_VV
-	if (prpl_info && prpl_info->get_media_caps) {
-		PurpleAccount *account = purple_buddy_get_account(buddy);
-		const gchar *who = purple_buddy_get_name(buddy);
-		PurpleMediaCaps caps = purple_prpl_get_media_caps(account, who);
-		if (caps & PURPLE_MEDIA_CAPS_AUDIO) {
-			pidgin_new_item_from_stock(menu, _("_Audio Call"),
-				PIDGIN_STOCK_TOOLBAR_AUDIO_CALL,
-				G_CALLBACK(gtk_blist_menu_audio_call_cb), buddy, 0, 0, NULL);
-		}
-		if (caps & PURPLE_MEDIA_CAPS_AUDIO_VIDEO) {
-			pidgin_new_item_from_stock(menu, _("Audio/_Video Call"),
-				PIDGIN_STOCK_TOOLBAR_VIDEO_CALL,
-				G_CALLBACK(gtk_blist_menu_video_call_cb), buddy, 0, 0, NULL);
-		} else if (caps & PURPLE_MEDIA_CAPS_VIDEO) {
-			pidgin_new_item_from_stock(menu, _("_Video Call"),
-				PIDGIN_STOCK_TOOLBAR_VIDEO_CALL,
-				G_CALLBACK(gtk_blist_menu_video_call_cb), buddy, 0, 0, NULL);
-		}
-	}
-
-#endif
-*/
-	/*
-	if (prpl_info && prpl_info->send_file) {
-		if (!prpl_info->can_receive_file ||
-			prpl_info->can_receive_file(buddy->account->gc, buddy->name))
-		{
-			pidgin_new_item_from_stock(menu, _("_Send File..."),
-									 PIDGIN_STOCK_TOOLBAR_SEND_FILE,
-									 G_CALLBACK(gtk_blist_menu_send_file_cb),
-									 buddy, 0, 0, NULL);
-		}
-	}
-
-	pidgin_new_item_from_stock(menu, _("Add Buddy _Pounce..."), NULL,
-			G_CALLBACK(gtk_blist_menu_bp_cb), buddy, 0, 0, NULL);
-	*/
 	temp_list = buddy_nodes;
 	do{
 		node = (PurpleBlistNode *)temp_list->data;
@@ -2107,11 +2051,7 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 		
 		pidgin_new_item_from_stock(menu, show_offline ? _("Hide When Offline") : _("Show When Offline"),
 				NULL, G_CALLBACK(gtk_blist_multiple_menu_showoffline_cb), buddy_nodes, 0, 0, NULL);
-	
-/*
-	pidgin_append_blist_node_proto_menu(menu, buddy->account->gc, node);
-	pidgin_append_blist_node_extended_menu(menu, node);
-*/
+
 	if (!contact_expanded && contact_exists)
 		pidgin_append_blist_multiple_node_move_to_menu(menu, pidgin_blist_get_distinct_contact_nodes(buddy_nodes));
 
@@ -2503,7 +2443,8 @@ pidgin_blist_show_context_menu(PurpleBlistNode *node,
 }
 
 static GtkWidget *
-create_multiple_chat_menu(GList *chat_nodes){
+create_multiple_chat_menu(GList *chat_nodes)
+{
 
 	GtkWidget *menu = NULL;
 
@@ -2534,26 +2475,18 @@ create_multiple_chat_menu(GList *chat_nodes){
 	pidgin_new_check_item(menu, _("Persistent"),
 			G_CALLBACK(gtk_blist_multiple_menu_persistent_cb), chat_nodes, persistent);
 
-	//pidgin_append_blist_node_proto_menu(menu, c->account->gc, node);
-	//pidgin_append_blist_node_extended_menu(menu, node);
-
 	pidgin_separator(menu);
 
-	/*pidgin_new_item_from_stock(menu, _("_Edit Settings..."), NULL,
-				 G_CALLBACK(chat_components_edit), node, 0, 0, NULL);
-	pidgin_new_item_from_stock(menu, _("_Alias..."), PIDGIN_STOCK_ALIAS,
-				 G_CALLBACK(gtk_blist_menu_alias_cb), node, 0, 0, NULL);*/
 	pidgin_new_item_from_stock(menu, _("_Remove"), GTK_STOCK_REMOVE,
 				 G_CALLBACK(pidgin_blist_multiple_remove_cb), chat_nodes, 0, 0, NULL);
-
 
 	return menu;
 }
 
 static GtkWidget *
-create_multiple_buddy_menu(GList *buddy_nodes){
+create_multiple_buddy_menu(GList *buddy_nodes)
+{
 
-	//struct _pidgin_blist_node *gtknode = (struct _pidgin_blist_node *)node->ui_data;
 	GtkWidget *menu;
 	GtkWidget *menuitem;
 	gboolean show_offline = purple_prefs_get_bool(PIDGIN_PREFS_ROOT "/blist/show_offline_buddies");
@@ -2565,15 +2498,15 @@ create_multiple_buddy_menu(GList *buddy_nodes){
 }
 
 static GtkWidget *
-create_multiple_contact_menu(GList *contact_nodes){
+create_multiple_contact_menu(GList *contact_nodes)
+{
 	/* menu when no selected contact nodes are expanded */
-	//struct _pidgin_blist_node *gtknode = (struct _pidgin_blist_node *)node->ui_data;
+	
 	GtkWidget *menu;
 	GtkWidget *menuitem;
 	GList *buddy_nodes = NULL, *temp_list = NULL;
 	PurpleBuddy *b;
 	PurpleBlistNode *node;
-	//gboolean show_offline = purple_prefs_get_bool(PIDGIN_PREFS_ROOT "/blist/show_offline_buddies");
 
 	temp_list = contact_nodes;
 
@@ -2596,53 +2529,18 @@ create_multiple_contact_menu(GList *contact_nodes){
 
 		pidgin_separator(menu);
 
-		//add_buddy_icon_menu_items(menu, node);
-
 		pidgin_new_item_from_stock(menu, _("_Expand"),
 					 GTK_STOCK_ZOOM_OUT,
 					 G_CALLBACK(pidgin_blist_multiple_expand_contact_cb),
 					 contact_nodes, 0, 0, NULL);
-
-		/*if(node->child->next) {
-			PurpleBlistNode *bnode;
-
-			for(bnode = node->child; bnode; bnode = bnode->next) {
-				PurpleBuddy *buddy = (PurpleBuddy*)bnode;
-				GdkPixbuf *buf;
-				GtkWidget *submenu;
-				GtkWidget *image;
-
-				if(buddy == b)
-					continue;
-				if(!buddy->account->gc)
-					continue;
-				if(!show_offline && !PURPLE_BUDDY_IS_ONLINE(buddy))
-					continue;
-
-				menuitem = gtk_image_menu_item_new_with_label(buddy->name);
-				buf = pidgin_create_prpl_icon(buddy->account,PIDGIN_PRPL_ICON_SMALL);
-				image = gtk_image_new_from_pixbuf(buf);
-				g_object_unref(G_OBJECT(buf));
-				gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-											  image);
-				gtk_widget_show(image);
-				gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-				gtk_widget_show(menuitem);
-
-				submenu = gtk_menu_new();
-				gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
-				gtk_widget_show(submenu);
-
-				pidgin_blist_make_buddy_menu(submenu, buddy, TRUE);
-			}
-		}*/
 
 	return menu;
 
 }
 
 static GtkWidget *
-create_multiple_contact_expanded_menu(GList *contact_nodes){
+create_multiple_contact_expanded_menu(GList *contact_nodes)
+{
 	/* menu when atleast one contact is expanded */
 	GtkWidget *menu = NULL;
 	menu = gtk_menu_new();
@@ -2652,14 +2550,9 @@ create_multiple_contact_expanded_menu(GList *contact_nodes){
 				 contact_nodes, 0, 0, NULL);
 
 	pidgin_separator(menu);
-/*
-	pidgin_new_item_from_stock(menu, _("_Alias..."), PIDGIN_STOCK_ALIAS,
-				 G_CALLBACK(gtk_blist_menu_alias_cb), node, 0, 0, NULL);
-*/
+
 	pidgin_new_item_from_stock(menu, _("_Remove"), GTK_STOCK_REMOVE,
 				 G_CALLBACK(pidgin_blist_multiple_remove_cb), contact_nodes, 0, 0, NULL);
-
-	//add_buddy_icon_menu_items(menu, node);
 
 	pidgin_separator(menu);
 
@@ -2667,13 +2560,13 @@ create_multiple_contact_expanded_menu(GList *contact_nodes){
 				 G_CALLBACK(pidgin_blist_multiple_collapse_contact_cb),
 				 contact_nodes, 0, 0, NULL);
 
-	//pidgin_append_blist_node_extended_menu(menu, node);
 	return menu;
 
 }
 
 static GtkWidget *
-create_multiple_group_menu(GList *group_nodes){
+create_multiple_group_menu(GList *group_nodes)
+{
 	GtkWidget *menu = NULL;
 	GtkWidget *item;
 	GList *temp_list = group_nodes;
@@ -2697,15 +2590,13 @@ create_multiple_group_menu(GList *group_nodes){
 
 	pidgin_new_item_from_stock(menu, show_offline ? _("Hide When Offline") : _("Show When Offline"),
 				NULL, G_CALLBACK(gtk_blist_multiple_menu_showoffline_cb), group_nodes, 0, 0, NULL);
-	//add_buddy_icon_menu_items(menu, node);
-
-	//pidgin_append_blist_node_extended_menu(menu, node);
 
 	return menu;
 }
 
 static GtkWidget *
-create_multiple_cbc_menu(GList *chat_nodes, GList *buddy_nodes, GList *contact_nodes){
+create_multiple_cbc_menu(GList *chat_nodes, GList *buddy_nodes, GList *contact_nodes)
+{
 	GtkWidget *menu = NULL;
 	GList *main_list = NULL;
 
@@ -2725,11 +2616,9 @@ static gboolean pidgin_blist_show_multiple_selection_context_menu(GList *selecte
 								 guint button,
 								 guint32 time)
 {
-	//struct _pidgin_blist_node *gtknode;
 	GtkWidget *menu = NULL;
 	gboolean handled = FALSE;
 	guint total_nodes, count = 0;
-	//gtknode = (struct _pidgin_blist_node *)node->ui_data;
 	PurpleBlistNode *node;
 	GList *chat_nodes = NULL, *buddy_nodes = NULL, *contact_nodes = NULL, *group_nodes = NULL, *other_nodes = NULL, *temp_list;
 	temp_list = selected_nodes;
@@ -2797,6 +2686,7 @@ static gboolean pidgin_blist_show_multiple_selection_context_menu(GList *selecte
 		/* only chat and/or buddy and/or contact nodes selected */
 		menu = create_multiple_cbc_menu(chat_nodes, buddy_nodes, contact_nodes);
 	}
+
 #ifdef _WIN32
 	pidgin_blist_tooltip_destroy();
 
@@ -2808,8 +2698,8 @@ static gboolean pidgin_blist_show_multiple_selection_context_menu(GList *selecte
 		gtkblist->timeout = 0;
 	}
 #endif
-	/* Now display the menu */
 
+	/* Now display the menu */
 	if (menu != NULL) {
 		gtk_widget_show_all(menu);
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, func, tv, button, time);
@@ -2972,7 +2862,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 		}
 	}
 #endif
-	//gtk_tree_selection_unselect_all(sel);
+
 	gtk_tree_path_free(path);
 	return FALSE;
 }
@@ -6918,7 +6808,7 @@ static void pidgin_blist_show(PurpleBuddyList *list)
 	/* Set up selection stuff */
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(gtkblist->treeview));
 	gtk_tree_selection_set_mode(selection,GTK_SELECTION_MULTIPLE); /* Enable multiple selection */
-	gtk_tree_view_set_rubber_banding (GTK_TREE_VIEW(gtkblist->treeview), TRUE); /* Enable multiple selection by dragging the mouse */
+	gtk_tree_view_set_rubber_banding(GTK_TREE_VIEW(gtkblist->treeview), TRUE); /* Enable multiple selection by dragging the mouse */
 	g_signal_connect(G_OBJECT(selection), "changed", G_CALLBACK(pidgin_blist_selection_changed), NULL);
 
 	/* Set up dnd */
@@ -7189,7 +7079,8 @@ static gboolean get_iter_from_node(PurpleBlistNode *node, GtkTreeIter *iter) {
 	return TRUE;
 }
 
-static GList *pidgin_blist_get_selected_nodes(GList *selected_list, GtkTreeModel* model){
+static GList *pidgin_blist_get_selected_nodes(GList *selected_list, GtkTreeModel* model)
+{
 	GList *selected_nodes = NULL;
 	GtkTreeIter iter;
 	PurpleBlistNode *node = NULL;
@@ -7237,7 +7128,8 @@ static void pidgin_blist_remove(PurpleBuddyList *list, PurpleBlistNode *node)
 	}
 }
 
-static gboolean compare_lists(GList *a, GList *b){
+static gboolean compare_lists(GList *a, GList *b)
+{
 	if(g_list_length(a) != g_list_length(b))
 		return FALSE;
 	do{
@@ -7519,7 +7411,6 @@ static char *pidgin_get_group_title(PurpleBlistNode *gnode, gboolean expanded)
 			}
 		}while(selected_nodes = selected_nodes->next);
 	}
-	//selected = (gnode == selected_node);
 
 	if (!expanded) {
 		g_snprintf(group_count, sizeof(group_count), "%d/%d",
@@ -7556,7 +7447,6 @@ static char *pidgin_get_group_title(PurpleBlistNode *gnode, gboolean expanded)
 	}
 
 	g_free(esc);
-	//gtk_tree_path_free(path);
 	return mark;
 }
 
