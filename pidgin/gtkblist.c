@@ -1844,9 +1844,10 @@ pidgin_append_blist_multiple_node_move_to_menu(GtkWidget *menu, GList *selected_
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
 
 	/* if all selected nodes belong to same group then identify it */
+	temp_list = selected_nodes;
 	prev_parent = purple_blist_node_get_parent((PurpleBlistNode *)temp_list->data);
 
-	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next){
+	for(; temp_list; temp_list = temp_list->next){
 		parent = purple_blist_node_get_parent((PurpleBlistNode *)temp_list->data);
 		if(parent != prev_parent){
 			check = FALSE;
