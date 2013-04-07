@@ -308,11 +308,11 @@ static void gtk_blist_menu_im_cb(GtkWidget *w, PurpleBuddy *b)
 static void gtk_blist_multiple_menu_im_cb(GtkWidget *w, GList *buddy_nodes)
 {	
 	PurpleBuddy *b;
-	do{
+	for(; buddy_nodes; buddy_nodes = buddy_nodes->next) {
 		b = (PurpleBuddy *) buddy_nodes->data;
 		pidgin_dialogs_im_with_user(purple_buddy_get_account(b),
 	                            purple_buddy_get_name(b));
-	}while(buddy_nodes = buddy_nodes->next);
+	}
 }
 
 #ifdef USE_VV
@@ -358,15 +358,15 @@ static void gtk_blist_multiple_menu_move_to_cb(GtkWidget *w, GList *selected_nod
 {
 	PurpleGroup *group = g_object_get_data(G_OBJECT(w), "groupnode");
 	PurpleBlistNode *node;
-	GList *temp_list = selected_nodes;
+	GList *temp_list;
 
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *) temp_list->data;
-		if(PURPLE_BLIST_NODE_IS_CONTACT(node)){
+		if(PURPLE_BLIST_NODE_IS_CONTACT(node)) {
 			if (purple_blist_node_get_parent(node) != group)
 				purple_blist_add_contact((PurpleContact *)node, group, NULL);
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 }
 
@@ -378,11 +378,11 @@ static void gtk_blist_menu_autojoin_cb(GtkWidget *w, PurpleChat *chat)
 
 static void gtk_blist_multiple_menu_autojoin_cb(GtkWidget *w, GList *chat_nodes)
 {
-	GList *temp_list = chat_nodes;
-	do{
+	GList *temp_list;
+	for(temp_list = chat_nodes; temp_list; temp_list = temp_list->next) {
 		purple_blist_node_set_bool((PurpleBlistNode*)temp_list->data, "gtk-autojoin",
 				gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(w)));
-	}while(temp_list = temp_list->next);
+	}
 }
 
 static void gtk_blist_menu_persistent_cb(GtkWidget *w, PurpleChat *chat)
@@ -393,11 +393,11 @@ static void gtk_blist_menu_persistent_cb(GtkWidget *w, PurpleChat *chat)
 
 static void gtk_blist_multiple_menu_persistent_cb(GtkWidget *w, GList *chat_nodes)
 {
-	GList *temp_list = chat_nodes;
-	do{
+	GList *temp_list;
+	for(temp_list = chat_nodes; temp_list; temp_list = temp_list->next) {
 		purple_blist_node_set_bool((PurpleBlistNode*)temp_list->data, "gtk-persistent",
 				gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(w)));
-	}while(temp_list = temp_list->next);
+	}
 }
 
 static PurpleConversation *
@@ -455,9 +455,9 @@ static void gtk_blist_menu_join_cb(GtkWidget *w, PurpleChat *chat)
 static void gtk_blist_multiple_menu_join_cb(GtkWidget *w, GList *chat_nodes)
 {	
 	GList *temp_list = chat_nodes;
-	do{
+	for(temp_list = chat_nodes; temp_list; temp_list = temp_list->next) { 
 		gtk_blist_join_chat((PurpleChat *)temp_list->data);
-	}while(temp_list = temp_list->next);
+	}
 }
 
 static void gtk_blist_renderer_editing_cancelled_cb(GtkCellRenderer *renderer, PurpleBuddyList *list)
@@ -839,11 +839,11 @@ static void gtk_blist_multiple_menu_showlog_cb(GtkWidget *w, GList *selected_nod
 	PurpleLogType type;
 	PurpleAccount *account;
 	char *name = NULL;
-	GList *temp_list = selected_nodes;
+	GList *temp_list;
 	PurpleBlistNode *node;
 	gboolean check;
 
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		check = TRUE;
 		pidgin_set_cursor(gtkblist->window, GDK_WATCH);
 		node = (PurpleBlistNode *) temp_list->data;
@@ -877,8 +877,8 @@ static void gtk_blist_multiple_menu_showlog_cb(GtkWidget *w, GList *selected_nod
 			pidgin_log_show(type, name, account);
 			pidgin_clear_cursor(gtkblist->window);
 		}
-	}while(temp_list = temp_list->next);
-		g_free(name);
+	}
+	g_free(name);
 
 }
 
@@ -926,36 +926,33 @@ static void gtk_blist_menu_showoffline_cb(GtkWidget *w, PurpleBlistNode *node)
 
 static void gtk_blist_multiple_menu_showoffline_cb(GtkWidget *w, GList *nodes_list)
 {
-	GList *temp_list = nodes_list;
+	GList *temp_list;
 	gboolean show_offline = TRUE;
 	PurpleBlistNode *node;
 
-	do{
+	for(temp_list = nodes_list; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode*) temp_list->data;
 		if (!(purple_blist_node_get_flags(node) & PURPLE_BLIST_NODE_FLAG_NO_SAVE)) {
-			if(!purple_blist_node_get_bool(node, "show_offline")){
+			if(!purple_blist_node_get_bool(node, "show_offline")) {
+				/* by default priority is for node to be shown even when offline */
 				show_offline = FALSE;
 				break;
-				/* by default priority is for node to be shown even when offline */
 			}
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 	show_offline = !show_offline;
-	temp_list = nodes_list;
 
-	do{
+	for(temp_list = nodes_list; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode*) temp_list->data;
 
-		if (PURPLE_BLIST_NODE_IS_BUDDY(node))
-		{
+		if (PURPLE_BLIST_NODE_IS_BUDDY(node)) {
 			purple_blist_node_set_bool(node, "show_offline",
 			                           show_offline);
 			pidgin_blist_update(purple_get_blist(), node);
 		}
 
-		else if (PURPLE_BLIST_NODE_IS_CONTACT(node))
-		{
+		else if (PURPLE_BLIST_NODE_IS_CONTACT(node)) {
 			PurpleBlistNode *bnode;
 
 			purple_blist_node_set_bool(node, "show_offline", show_offline);
@@ -984,7 +981,7 @@ static void gtk_blist_multiple_menu_showoffline_cb(GtkWidget *w, GList *nodes_li
 				}
 			}
 		}
-	}while(temp_list = temp_list->next);
+	}
 }
 
 
@@ -1412,7 +1409,7 @@ static void pidgin_blist_add_chat_cb(void)
 	GtkTreePath* path;
 	GtkTreeModel* model = NULL;
 
-	if(gtk_tree_selection_count_selected_rows(sel) >= 1){
+	if(gtk_tree_selection_count_selected_rows(sel) >= 1) {
 		model = gtk_tree_view_get_model (GTK_TREE_VIEW(gtkblist->treeview));
 		selected_list = gtk_tree_selection_get_selected_rows(sel,&model);
 		path = (GtkTreePath*) selected_list->data;
@@ -1493,18 +1490,21 @@ pidgin_blist_remove_cb (GtkWidget *w, PurpleBlistNode *node)
 static void
 pidgin_blist_multiple_remove_cb (GtkWidget *w, GList *selected_nodes)
 {
-	GList *temp_list = selected_nodes;
-	do{
+	GList *temp_list;
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		if (PURPLE_BLIST_NODE_IS_BUDDY(temp_list->data)) {
 			pidgin_dialogs_remove_buddy((PurpleBuddy*)temp_list->data);
-		} else if (PURPLE_BLIST_NODE_IS_CHAT(temp_list->data)) {
+		}
+		else if (PURPLE_BLIST_NODE_IS_CHAT(temp_list->data)) {
 			pidgin_dialogs_remove_chat((PurpleChat*)temp_list->data);
-		} else if (PURPLE_BLIST_NODE_IS_GROUP(temp_list->data)) {
+		}
+		else if (PURPLE_BLIST_NODE_IS_GROUP(temp_list->data)) {
 			pidgin_dialogs_remove_group((PurpleGroup*)temp_list->data);
-		} else if (PURPLE_BLIST_NODE_IS_CONTACT(temp_list->data)) {
+		}
+		else if (PURPLE_BLIST_NODE_IS_CONTACT(temp_list->data)) {
 			pidgin_dialogs_remove_contact((PurpleContact*)temp_list->data);
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 }
 
@@ -1529,26 +1529,26 @@ scroll_to_expanded_cell(gpointer data)
 
 static GList *pidgin_blist_get_contact_nodes(GList *buddy_nodes)
 {
-	GList *contact_nodes = NULL, *temp_list = buddy_nodes;
+	GList *contact_nodes = NULL, *temp_list;
 
-	do{
+	for(temp_list = buddy_nodes; temp_list; temp_list = temp_list->next) {
 		contact_nodes = g_list_append(contact_nodes, purple_buddy_get_contact((PurpleBuddy *)temp_list->data));
-	}while(temp_list = temp_list->next);
+	}
 
 	return contact_nodes;
 }
 
 static GList *pidgin_blist_get_distinct_contact_nodes(GList *buddy_nodes)
 {
-	GList *contact_nodes = NULL, *temp_list = buddy_nodes;
+	GList *contact_nodes = NULL, *temp_list;
 	PurpleContact *contact;
 
-	do{
+	for(temp_list = buddy_nodes; temp_list; temp_list = temp_list->next) {
 		contact = purple_buddy_get_contact((PurpleBuddy *)temp_list->data);
 		if(g_list_index(buddy_nodes, (gpointer)contact) != -1)
 			continue;
 		contact_nodes = g_list_append(contact_nodes, contact);
-	}while(temp_list = temp_list->next);
+	}
 
 	return contact_nodes;
 }
@@ -1560,9 +1560,9 @@ pidgin_blist_multiple_expand_contact_cb(GtkWidget *w, GList *selected_nodes)
 	GtkTreeIter iter, parent;
 	PurpleBlistNode *bnode, *node;
 	GtkTreePath *path;
-	GList *temp_list = selected_nodes;
+	GList *temp_list;
 
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 		if(!PURPLE_BLIST_NODE_IS_CONTACT(node))
 			continue;
@@ -1574,10 +1574,7 @@ pidgin_blist_multiple_expand_contact_cb(GtkWidget *w, GList *selected_nodes)
 		for(bnode = purple_blist_node_get_first_child(node); bnode; bnode = purple_blist_node_get_sibling_next(bnode)) {
 		pidgin_blist_update(NULL, bnode);
 		}
-	}while(temp_list = temp_list->next);
-
-
-
+	}
 
 	/* This ensures that the bottom buddy is visible, i.e. not scrolled off the alignment */
 	if (get_iter_from_node(node, &parent)) {
@@ -1653,9 +1650,9 @@ pidgin_blist_multiple_collapse_contact_cb(GtkWidget *w, GList *selected_nodes)
 {
 	PurpleBlistNode *bnode, *node;
 	struct _pidgin_blist_node *gtknode;
-	GList *temp_list = selected_nodes;
+	GList *temp_list;
 
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 		if(!PURPLE_BLIST_NODE_IS_CONTACT(node))
 			continue;
@@ -1667,7 +1664,7 @@ pidgin_blist_multiple_collapse_contact_cb(GtkWidget *w, GList *selected_nodes)
 		for(bnode = purple_blist_node_get_first_child(node); bnode; bnode = purple_blist_node_get_sibling_next(bnode)) {
 			pidgin_blist_update(NULL, bnode);
 		}
-	}while(temp_list = temp_list->next);
+	}
 }
 
 static void
@@ -1704,10 +1701,10 @@ multiple_change_privacy(GtkWidget *widget, GList *selected_nodes)
 	PurpleAccount *account;
 	const char *name;
 	gboolean permitted;
-	GList *temp_list = selected_nodes;
+	GList *temp_list;
 
 	/* compute permitted */
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		buddy = (PurpleBuddy *) temp_list->data;
 		account = purple_buddy_get_account(buddy);
 		if(!purple_privacy_check(account, purple_buddy_get_name(buddy))){
@@ -1715,11 +1712,9 @@ multiple_change_privacy(GtkWidget *widget, GList *selected_nodes)
 			break;
 		}
 
-	}while(temp_list = temp_list->next);
+	}
 
-	temp_list = selected_nodes;
-
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		if (!PURPLE_BLIST_NODE_IS_BUDDY((PurpleBlistNode *)temp_list->data))
 			continue;
 
@@ -1735,7 +1730,7 @@ multiple_change_privacy(GtkWidget *widget, GList *selected_nodes)
 			purple_privacy_allow(account, name, FALSE, FALSE);
 		
 		pidgin_blist_update(purple_get_blist(), (PurpleBlistNode *)temp_list->data);
-	}while(temp_list = temp_list->next);
+	}
 }
 
 void pidgin_append_blist_node_privacy_menu(GtkWidget *menu, PurpleBlistNode *node)
@@ -1756,11 +1751,11 @@ void pidgin_append_blist_multiple_node_privacy_menu(GtkWidget *menu, GList *sele
 {
 	PurpleBuddy *buddy;
 	PurpleAccount *account;
-	GList * temp_list = selected_nodes;
+	GList * temp_list;
 	gboolean permitted = TRUE;
 
 	/* By default everyone should be unblocked so if any one selected node is blocked, the menu shows Unblock*/
-	do{
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		buddy = (PurpleBuddy *) temp_list->data;
 		account = purple_buddy_get_account(buddy);
 		if(!purple_privacy_check(account, purple_buddy_get_name(buddy))){
@@ -1768,7 +1763,7 @@ void pidgin_append_blist_multiple_node_privacy_menu(GtkWidget *menu, GList *sele
 			break;
 		}
 
-	}while(temp_list = temp_list->next);
+	}
 
 	pidgin_new_item_from_stock(menu, permitted ? _("_Block") : _("Un_block"),
 						permitted ? PIDGIN_STOCK_TOOLBAR_BLOCK : PIDGIN_STOCK_TOOLBAR_UNBLOCK, G_CALLBACK(multiple_change_privacy),
@@ -1849,16 +1844,16 @@ pidgin_append_blist_multiple_node_move_to_menu(GtkWidget *menu, GList *selected_
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
 
 	/* if all selected nodes belong to same group then identify it */
-	temp_list = selected_nodes;
 	prev_parent = purple_blist_node_get_parent((PurpleBlistNode *)temp_list->data);
-	do{
+
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next){
 		parent = purple_blist_node_get_parent((PurpleBlistNode *)temp_list->data);
 		if(parent != prev_parent){
 			check = FALSE;
 			break;
 		}
 
-	}while(temp_list = temp_list->next);
+	}
 
 	for (group = purple_blist_get_root(); group; group = purple_blist_node_get_sibling_next(group)) {
 		if (!PURPLE_BLIST_NODE_IS_GROUP(group))
@@ -1999,8 +1994,7 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 	g_return_if_fail(menu);
 	g_return_if_fail(buddy_nodes);
 
-	temp_list = buddy_nodes;
-	do{
+	for(temp_list = buddy_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 
 		contact = purple_buddy_get_contact((PurpleBuddy *)node);
@@ -2011,32 +2005,30 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 				break;
 			}
 		}
-		else{
+		else {
 			contact_exists = FALSE;
 			break;
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 	pidgin_new_item_from_stock(menu, _("I_M"), PIDGIN_STOCK_TOOLBAR_MESSAGE_NEW,
 			G_CALLBACK(gtk_blist_multiple_menu_im_cb), buddy_nodes, 0, 0, NULL);
 
-	temp_list = buddy_nodes;
-	do{
+	for(temp_list = buddy_nodes; temp_list; temp_list = temp_list->next){
 		node = (PurpleBlistNode *)temp_list->data;
 
 		if (node->parent && node->parent->child->next &&
 		      !sub && !contact_expanded) {
 			check = FALSE;
 		}
-	}while(temp_list = temp_list->next);
+	}
 
-	if(check && !sub){
+	if(check && !sub) {
 			pidgin_new_item_from_stock(menu, _("View _Log"), NULL,
 					G_CALLBACK(gtk_blist_multiple_menu_showlog_cb), buddy_nodes, 0, 0, NULL);
 	}
 
-	temp_list = buddy_nodes;
-	do{
+	for(temp_list = buddy_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 
 		if (!PURPLE_BLIST_NODE_HAS_FLAG(node, PURPLE_BLIST_NODE_FLAG_NO_SAVE)) {
@@ -2046,11 +2038,11 @@ pidgin_blist_multiple_make_buddy_menu(GtkWidget *menu, GList *buddy_nodes, gbool
 				/* by default priority is for node to be shown even when offline */
 			}
 		}
-	}while(temp_list = temp_list->next);
+	}
 	
 		
-		pidgin_new_item_from_stock(menu, show_offline ? _("Hide When Offline") : _("Show When Offline"),
-				NULL, G_CALLBACK(gtk_blist_multiple_menu_showoffline_cb), buddy_nodes, 0, 0, NULL);
+	pidgin_new_item_from_stock(menu, show_offline ? _("Hide When Offline") : _("Show When Offline"),
+			NULL, G_CALLBACK(gtk_blist_multiple_menu_showoffline_cb), buddy_nodes, 0, 0, NULL);
 
 	if (!contact_expanded && contact_exists)
 		pidgin_append_blist_multiple_node_move_to_menu(menu, pidgin_blist_get_distinct_contact_nodes(buddy_nodes));
@@ -2074,7 +2066,8 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 	GtkTreePath *path;
 	GList *selected_list = NULL, *selected_nodes = NULL, *temp_list = NULL;
 	GtkTreeModel *model;
-	gboolean retval = TRUE; /* return value */
+	/* return value */
+	gboolean retval = TRUE; 
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
 	if(gtk_tree_selection_count_selected_rows(sel) == 0)
@@ -2111,8 +2104,7 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 				break;
 
 			case GDK_Left:
-				temp_list = selected_list;
-				do{
+				for(temp_list = selected_list; temp_list; temp_list = temp_list->next) {
 					path = (GtkTreePath *) temp_list->data;
 					if (gtk_tree_view_row_expanded(GTK_TREE_VIEW(tv), path)) {
 						/* Collapse the Group */
@@ -2136,14 +2128,13 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 							retval = FALSE;
 						}
 					}
-				}while(temp_list = temp_list->next);
+				}
 				gtk_tree_path_free(path);
 				return retval;
 				break;
 
 			case GDK_Right:
-				temp_list = selected_list;
-				do{
+				for(temp_list = selected_list; temp_list; temp_list = temp_list->next) {
 					path = (GtkTreePath *) temp_list->data;
 					if(gtk_tree_model_get_iter(GTK_TREE_MODEL(gtkblist->treemodel), &iter, path)){
 						gtk_tree_model_get(GTK_TREE_MODEL(gtkblist->treemodel), &iter, NODE_COLUMN, &node, -1);
@@ -2173,7 +2164,7 @@ gtk_blist_key_press_cb(GtkWidget *tv, GdkEventKey *event, gpointer data)
 							}
 						}
 					}
-				}while(temp_list = temp_list->next);
+				}
 				gtk_tree_path_free(path);
 				return retval;
 				break;
@@ -2449,24 +2440,22 @@ create_multiple_chat_menu(GList *chat_nodes)
 	GtkWidget *menu = NULL;
 
 	menu = gtk_menu_new();
-	GList *temp_list = chat_nodes;
+	GList *temp_list;
 	gboolean autojoin = TRUE, persistent = TRUE;
 
-	do{
+	for(temp_list = chat_nodes; temp_list; temp_list = temp_list->next) {
 		if(!purple_blist_node_get_bool((PurpleBlistNode*) temp_list->data, "gtk-autojoin")){
 			autojoin = FALSE;
 			break;
 		}
-	}while(temp_list = temp_list->next);
+	}
 
-	temp_list = chat_nodes;
-
-	do{
+	for(temp_list = chat_nodes; temp_list; temp_list = temp_list->next) {
 		if(!purple_blist_node_get_bool((PurpleBlistNode*) temp_list->data, "gtk-persistent")){
 			persistent = FALSE;
 			break;
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 	pidgin_new_item_from_stock(menu, _("_Join"), PIDGIN_STOCK_CHAT,
 			G_CALLBACK(gtk_blist_multiple_menu_join_cb), chat_nodes, 0, 0, NULL);
@@ -2508,9 +2497,7 @@ create_multiple_contact_menu(GList *contact_nodes)
 	PurpleBuddy *b;
 	PurpleBlistNode *node;
 
-	temp_list = contact_nodes;
-
-	do{
+	for(temp_list = contact_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 		if (PURPLE_BLIST_NODE_IS_CONTACT(node))
 			b = purple_contact_get_priority_buddy((PurpleContact*)node);
@@ -2521,7 +2508,7 @@ create_multiple_contact_menu(GList *contact_nodes)
 
 
 		
-	}while(temp_list = temp_list->next);
+	}
 
 	menu = gtk_menu_new();
 
@@ -2569,7 +2556,7 @@ create_multiple_group_menu(GList *group_nodes)
 {
 	GtkWidget *menu = NULL;
 	GtkWidget *item;
-	GList *temp_list = group_nodes;
+	GList *temp_list;
 	PurpleBlistNode *node;
 	gboolean show_offline = TRUE;
 	menu = gtk_menu_new();
@@ -2577,16 +2564,16 @@ create_multiple_group_menu(GList *group_nodes)
 	pidgin_new_item_from_stock(menu, _("_Delete Groups"), GTK_STOCK_REMOVE,
 				 G_CALLBACK(pidgin_blist_multiple_remove_cb), group_nodes, 0, 0, NULL);
 
-	do{
+	for(temp_list = group_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode*) temp_list->data;
 		if (!(purple_blist_node_get_flags(node) & PURPLE_BLIST_NODE_FLAG_NO_SAVE)) {
-			if(!purple_blist_node_get_bool(node, "show_offline")){
+			if(!purple_blist_node_get_bool(node, "show_offline")) {
+				/* by default priority is for node to be shown even when offline */
 				show_offline = FALSE;
 				break;
-				/* by default priority is for node to be shown even when offline */
 			}
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 	pidgin_new_item_from_stock(menu, show_offline ? _("Hide When Offline") : _("Show When Offline"),
 				NULL, G_CALLBACK(gtk_blist_multiple_menu_showoffline_cb), group_nodes, 0, 0, NULL);
@@ -2625,7 +2612,8 @@ static gboolean pidgin_blist_show_multiple_selection_context_menu(GList *selecte
 	total_nodes = g_list_length(selected_nodes);
 	gboolean some_contact_expanded;
 
-	do {
+	/* categorizing nodes according to their types */
+	for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 		node = (PurpleBlistNode *)temp_list->data;
 
 		if (PURPLE_BLIST_NODE_IS_CHAT(node)){
@@ -2643,46 +2631,46 @@ static gboolean pidgin_blist_show_multiple_selection_context_menu(GList *selecte
 		else {
 			other_nodes = g_list_append(other_nodes,node);
 		}		
-	} while(temp_list = temp_list->next); /* categorizing nodes according to their types */
+	}
 
-	if(g_list_length(chat_nodes) == total_nodes){
+	if(g_list_length(chat_nodes) == total_nodes) {
 		/* only chat nodes selected */
 		menu = create_multiple_chat_menu(chat_nodes);
 	}
-	else if(g_list_length(buddy_nodes) == total_nodes){
+	else if(g_list_length(buddy_nodes) == total_nodes) {
 		/* only buddy nodes selected */
 		menu = create_multiple_buddy_menu(buddy_nodes);
 	}
-	else if(g_list_length(contact_nodes) == total_nodes){
+	else if(g_list_length(contact_nodes) == total_nodes) {
 		/* only contact nodes selected */
-		temp_list = contact_nodes;
 		some_contact_expanded = FALSE;
-		do{
+
+		for(temp_list = contact_nodes; temp_list; temp_list = temp_list->next) {
 			node = (PurpleBlistNode *)temp_list->data;
-			if(((struct _pidgin_blist_node *)node->ui_data)->contact_expanded){
+			if(((struct _pidgin_blist_node *)node->ui_data)->contact_expanded) {
 				some_contact_expanded = TRUE;
 				break;
 			}
 			
-		}while(temp_list = temp_list->next);
+		}
 
-		if(some_contact_expanded){
+		if(some_contact_expanded) {
 			menu = create_multiple_contact_expanded_menu(contact_nodes);
 		}
 		/* generate list of buddy_nodes and create menu accordingly */
-		else{
+		else {
 			menu = create_multiple_contact_menu(contact_nodes);
 		}
 		
 	}
-	else if(g_list_length(group_nodes) == total_nodes){
+	else if(g_list_length(group_nodes) == total_nodes) {
 		/* only group nodes selected */
 		menu = create_multiple_group_menu(group_nodes);
 	}
-	else if(g_list_length(other_nodes) == total_nodes){
+	else if(g_list_length(other_nodes) == total_nodes) {
 		/* only other nodes selected */
 	}
-	else if(g_list_length(group_nodes) == 0 && g_list_length(other_nodes) == 0){
+	else if(g_list_length(group_nodes) == 0 && g_list_length(other_nodes) == 0) {
 		/* only chat and/or buddy and/or contact nodes selected */
 		menu = create_multiple_cbc_menu(chat_nodes, buddy_nodes, contact_nodes);
 	}
@@ -2738,14 +2726,12 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 			model = GTK_TREE_MODEL(gtkblist->treemodel);
 			selected_list = gtk_tree_selection_get_selected_rows(sel, &model);
 
-			temp_list = selected_list;
-
-			do{
+			for(temp_list = selected_list; temp_list; temp_list = temp_list->next) {
 				if(!gtk_tree_path_compare(path, (GtkTreePath *)temp_list->data)){
 					check = TRUE;
 					break;
 				}
-			}while(temp_list = temp_list->next);
+			}
 
 			/* if unselected node was right clicked, deselect others and select the one that was clicked */
 			if(!check){
@@ -2792,13 +2778,12 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 		/* Right click draws a context menu */
 		if ((event->button == 3) && (event->type == GDK_BUTTON_PRESS)) {
 			/* checking if unselected node was right-clicked */
-			temp_list = selected_list;
-			do{
+			for(temp_list = selected_list; temp_list; temp_list = temp_list->next) {
 				if(!gtk_tree_path_compare(path, (GtkTreePath *)temp_list->data)){
 					check = TRUE;
 					break;
 				}
-			}while(temp_list = temp_list->next);
+			}
 
 			/* if unselected node was right clicked, deselect others and select the one that was clicked */
 			if(!check){
@@ -2811,8 +2796,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 		} else if ((event->button == 2) && (event->type == GDK_BUTTON_PRESS) &&
 				   (event->state & GDK_CONTROL_MASK)) {
 				
-			temp_list = selected_nodes;
-			do{
+			for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 				node = (PurpleBlistNode*) temp_list->data;
 				gtknode = (struct _pidgin_blist_node *)node->ui_data;
 				if(PURPLE_BLIST_NODE_IS_CONTACT(node)){
@@ -2821,7 +2805,7 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 					else
 						pidgin_blist_expand_contact_cb(NULL, node);
 				}
-			}while(temp_list = temp_list->next);
+			}
 				
 			handled = TRUE;
 
@@ -2850,13 +2834,12 @@ gtk_blist_button_press_cb(GtkWidget *tv, GdkEventButton *event, gpointer user_da
 		else if(gtk_tree_selection_count_selected_rows(sel)>1){
 			model = GTK_TREE_MODEL(gtkblist->treemodel);
 			selected_list = gtk_tree_selection_get_selected_rows(sel,&model);
-			temp_list = selected_list;
 			gtk_tree_selection_unselect_all(sel);
 
-			do{
+			for(temp_list = selected_list; temp_list; temp_list = temp_list->next) {
 				path = (GtkTreePath*) temp_list->data;
 				gtk_tree_selection_select_path(sel, path);
-			}while(temp_list = temp_list->next);
+			}
 			gtk_tree_path_free(path);
 			return TRUE;
 		}
@@ -2880,7 +2863,7 @@ pidgin_blist_popup_menu_cb(GtkWidget *tv, void *user_data)
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
 
-	if(gtk_tree_selection_count_selected_rows(sel) == 1){
+	if(gtk_tree_selection_count_selected_rows(sel) == 1) {
 		model = gtk_tree_view_get_model (GTK_TREE_VIEW(gtkblist->treeview));
 		selected_list = gtk_tree_selection_get_selected_rows(sel,&model);
 		path = (GtkTreePath*) selected_list->data;
@@ -2890,7 +2873,7 @@ pidgin_blist_popup_menu_cb(GtkWidget *tv, void *user_data)
 		}
 	}
 		
-	else if (gtk_tree_selection_count_selected_rows(sel)>1){
+	else if (gtk_tree_selection_count_selected_rows(sel)>1) {
 		model = gtk_tree_view_get_model (GTK_TREE_VIEW(gtkblist->treeview));
 		selected_list = gtk_tree_selection_get_selected_rows(sel,&model);
 		selected_nodes = pidgin_blist_get_selected_nodes(selected_list, model);
@@ -5739,9 +5722,7 @@ static void _prefs_change_redo_list(const char *name, PurplePrefType type,
 
 	if (selected_nodes)
 	{
-		temp_list = selected_nodes;
-
-		do{
+		for(temp_list = selected_nodes; temp_list; temp_list = temp_list->next) {
 			node = (PurpleBlistNode *) temp_list->data;
 			gtknode = node->ui_data;
 			if (gtknode && gtknode->row)
@@ -5751,7 +5732,7 @@ static void _prefs_change_redo_list(const char *name, PurplePrefType type,
 				gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(gtkblist->treeview), path, NULL, FALSE, 0, 0);
 				gtk_tree_path_free(path);
 			}
-		}while(temp_list = temp_list->next);
+		}
 		
 	}
 }
@@ -7086,13 +7067,13 @@ static GList *pidgin_blist_get_selected_nodes(GList *selected_list, GtkTreeModel
 	PurpleBlistNode *node = NULL;
 	GtkTreePath *path = NULL;
 
-	do{
+	for(; selected_list; selected_list = selected_list->next) {
 		path = (GtkTreePath *) selected_list->data;
 		if(gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &iter, path)){
 			gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, NODE_COLUMN, &node, -1);
 			selected_nodes = g_list_append(selected_nodes, node);
 		}
-	} while(selected_list = selected_list->next);
+	}
 
 	return selected_nodes;
 }
@@ -7158,16 +7139,16 @@ static gboolean do_multiple_selection_changed(GList *new_selected_nodes)
 		old_selected_nodes = gtkblist->selected_nodes;
 		gtkblist->selected_nodes = new_selected_nodes;
 		if(new_selected_nodes){
-			do{
+			for(; new_selected_nodes; new_selected_nodes = new_selected_nodes->next) {
 				node = (PidginBlistNode *) new_selected_nodes->data;
 				pidgin_blist_update(NULL,node);
-			}while(new_selected_nodes = new_selected_nodes->next);
+			}
 		}
 		if(old_selected_nodes){
-			do{
+			for(; old_selected_nodes; old_selected_nodes = old_selected_nodes->next) {
 				node = (PidginBlistNode *) old_selected_nodes->data;
 				pidgin_blist_update(NULL,node);
-			}while(old_selected_nodes = old_selected_nodes->next);
+			}
 		}
 	}
 
@@ -7191,8 +7172,7 @@ static void pidgin_blist_selection_changed(GtkTreeSelection *selection, gpointer
 	}
 	else return;
 
-	temp_list = new_selected_nodes;
-	do{
+	for(temp_list = new_selected_nodes; temp_list; temp_list = temp_list->next) {
 		new_selection = (PurpleBlistNode *) temp_list->data;
 		if(temp_list->data == NULL){
 			return;
@@ -7200,7 +7180,7 @@ static void pidgin_blist_selection_changed(GtkTreeSelection *selection, gpointer
 		if(!PURPLE_BLIST_NODE_IS_GROUP(new_selection)){
 			check = FALSE;
 		}
-	}while(temp_list = temp_list->next);
+	}
 
 	if ((new_selected_nodes != NULL) && check) {
 		do_multiple_selection_changed(new_selected_nodes);
@@ -7400,16 +7380,16 @@ static char *pidgin_get_group_title(PurpleBlistNode *gnode, gboolean expanded)
 	model = GTK_TREE_MODEL(gtkblist->treemodel);
 	selected_list = gtk_tree_selection_get_selected_rows(gtk_tree_view_get_selection(GTK_TREE_VIEW(gtkblist->treeview)), &model);
 
-	if(selected_list){
+	if(selected_list) {
 		selected_nodes = pidgin_blist_get_selected_nodes(selected_list, model);
 
-		do{
+		for(; selected_nodes; selected_nodes = selected_nodes->next) {
 			selected_node = (PurpleBlistNode *) selected_nodes->data;
-			if(gnode == selected_node){
+			if(gnode == selected_node) {
 				selected = TRUE;
 				break;
 			}
-		}while(selected_nodes = selected_nodes->next);
+		}
 	}
 
 	if (!expanded) {
